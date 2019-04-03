@@ -31,39 +31,6 @@ class PrintFinder(ast.NodeVisitor):
         """Only exists in python 2."""
         self.prints_used[(node.lineno, node.col_offset)] = VIOLATIONS["found"][PRINT_FUNCTION_NAME]
 
-    def visit_Call(self, node):
-        is_print_function = getattr(node.func, "id", None) in PRINT_FUNCTION_NAMES
-        is_print_function_attribute = (
-            getattr(getattr(node.func, "value", None), "id", None) in PRINT_FUNCTION_NAMES and getattr(node.func, "attr", None) in PRINT_FUNCTION_NAMES
-        )
-        if is_print_function:
-            self.prints_used[(node.lineno, node.col_offset)] = VIOLATIONS["found"][node.func.id]
-        elif is_print_function_attribute:
-            self.prints_used[(node.lineno, node.col_offset)] = VIOLATIONS["found"][node.func.attr]
-        self.generic_visit(node)
-
-    def visit_FunctionDef(self, node):
-        if node.name in PRINT_FUNCTION_NAMES:
-            self.prints_redefined[(node.lineno, node.col_offset)] = VIOLATIONS["declared"][node.name]
-        if PY2:
-            for arg in node.args.args:
-                if arg.id in PRINT_FUNCTION_NAMES:
-                    self.prints_redefined[(node.lineno, node.col_offset)] = VIOLATIONS["declared"][arg.id]
-        elif PY3:
-            for arg in node.args.args:
-                if arg.arg in PRINT_FUNCTION_NAMES:
-                    self.prints_redefined[(node.lineno, node.col_offset)] = VIOLATIONS["declared"][arg.arg]
-
-            for arg in node.args.kwonlyargs:
-                if arg.arg in PRINT_FUNCTION_NAMES:
-                    self.prints_redefined[(node.lineno, node.col_offset)] = VIOLATIONS["declared"][arg.arg]
-        self.generic_visit(node)
-
-    def visit_Name(self, node):
-        if node.id == PRINT_FUNCTION_NAME:
-            self.prints_redefined[(node.lineno, node.col_offset)] = VIOLATIONS["declared"][node.id]
-        self.generic_visit(node)
-
 
 class PrintChecker(object):
     options = None
